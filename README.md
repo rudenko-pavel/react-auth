@@ -350,4 +350,178 @@ project: REACT-auth
 		...
 
 
+## **************************************************************************************************** ##
+   *** Handling Authentication with React (Part 1 - without REDUX) ***
+## **************************************************************************************************** ##
+
+	32. Create new project at `console.developers.google.com`
+		- create `react-auth`
+	
+	33. Set up an OAuth confirmation screen
+		## console.developers.google.com - change Project - credentials (учетные данные) -  
+		## OAuth confirmation (настроить окно запроса доступа) - credentials (учетные данные) - 
+		## OAuth ClientID (Идентификатор клиента OAuth)
+		## web application:
+			- http://localhost:3000
+			- http://rudenkopavel.com
+		
+		Идентификатор клиента: `47661926609-9ekpajmdn1p8p4146r88vae5q14cdu64.apps.googleusercontent.com`
+		Секретный код клиента: `wFJ1K9w_-vgkvqkTb6Hb2ukG`
+		
+	34. Wiring Up the Google API Library
+		- Edit `public/index.html`
+		<head>
+		...
+			<script src="https://apis.google.com/js/api.js"></script>
+		...
+		</head>
+
+	35. Create `src/components/GoogleAuth.js`:
+		import React from "react";
+		class GoogleAuth extends React.Component {
+			render() {
+				return <div>GoogleAuth</div>;
+			}
+		}
+		export default GoogleAuth;
+
+	36. Edit `src/components/HeaderMenu/HeaderMenu.js`:
+		## import:
+		import GoogleAuth from "../GoogleAuth";
+
+	37. Edit `src/components/HeaderMenu/HeaderMenu.js`:
+		## Create an instanse of GoogleAuth
+		...
+		<div className="column HeaderMenu">
+          <div className="ui basic buttons">{this.renderList()}</div>
+          <GoogleAuth />
+        </div>
+		...
+
+	35. Edit `src/components/GoogleAuth.js`:
+		## инициализируем данные при первом отображении Компонента
+		componentDidMount() {
+			window.gapi.load('client:auth2');
+		}
+
+	35. Edit `src/components/GoogleAuth.js`:
+		## добавляем в функцию второй аргумент - функцию, которая вызывается после того, как первый аргумент
+		## был успешно загружен. Эта функция возвращает объект с данными `scope`, используя наш `ClientID` (п.33)
+		componentDidMount() {
+			window.gapi.load("client:auth2", () => {
+				window.gapi.client.init({
+					clientId:
+					"47661926609-9ekpajmdn1p8p4146r88vae5q14cdu64.apps.googleusercontent.com",
+					scope: "email"
+				});
+			});
+		}
+
+	36. Edit `src/components/GoogleAuth.js`
+		## Продолжаем разрабатывать наш класс.
+		## Какие-либо действия с полученным объектом, мы сможем делать только после того как его получим:
+		window.gapi.client.init({
+			clientId:
+			"47661926609-9ekpajmdn1p8p4146r88vae5q14cdu64.apps.googleusercontent.com",
+			scope: "email"
+		}).then (() =>{	});
+
+	37. Edit `src/components/GoogleAuth.js`
+		## Определяем статус юзера (LogIn/ LogOut):
+		.then(() => {
+          this.auth = window.gapi.auth2.getAuthInstance();
+        });
+
+	38. Edit `src/components/GoogleAuth.js`
+		## выводим на экран статус:
+		## для этого вводим переменную `isSignedIn`
+		state = { isSignedIn: null };
+		...
+		.then(() => {
+          this.auth = window.gapi.auth2.getAuthInstance();
+          this.setState({ isSignedIn: this.auth.isSignedIn.get() });
+        });
+
+	39. Edit `src/components/GoogleAuth.js`:
+		## отображаем текст `Log In/ Log Out` в зависимости от `state.isSignedIn`
+		## для этого вводим вспомогательную функцию:
+		renderAuthButton() {
+			if (this.state.isSignedIn === null) {
+				return <div>I don&apos;t khow if you are signed in</div>;
+			}
+			if (this.state.isSignedIn) {
+				return <div>You are signed</div>;
+			}
+			if (!this.state.isSignedIn) {
+				return <div>You are not signed</div>;
+			}
+		}
+		...
+		  render() {
+			return <div>{this.renderAuthButton()}</div>;
+		}
+
+	40. Edit `src/components/GoogleAuth.js`:
+		## Updating Auth State
+		## функция `onAuthChange()` следит за состоянием переменной `isSignedIn`
+		## отображаем `state.isSignedIn` на лету
+        .then(() => {
+          this.auth = window.gapi.auth2.getAuthInstance();
+          this.setState({ isSignedIn: this.auth.isSignedIn.get() });
+          this.auth.isSignedIn.listen(this.onAuthChange);
+        });
+		...
+		onAuthChange = () => {
+			this.setState({ isSignedIn: this.auth.isSignedIn.get() });
+		};
+
+		## для изменения состояния из консоли: 
+		## gapi.auth2.getAuthInstance().signOut()
+		## gapi.auth2.getAuthInstance().signIn()
+
+	40. Edit `src/components/GoogleAuth.js`:
+		## Отображаем кнопку `Log In/ Log Out`
+		if (this.state.isSignedIn) {
+		return (
+			<button className="ui red google button">
+			<i className="google icon" />
+			Sign Out
+			</button>
+		);
+		}
+		if (!this.state.isSignedIn) {
+		return (
+			<button className="ui green google button">
+			<i className="google icon" />
+			Sign In
+			</button>
+		);
+
+	41. Edit `src/components/GoogleAuth.js`:
+		## навешивание действий на кнопки:
+		onSignIn = () => {
+			this.auth.signIn();
+		};
+
+		onSignOut = () => {
+			this.auth.signOut();
+		};
+		...
+		if (this.state.isSignedIn) {
+			return (
+				// eslint-disable-next-line react/button-has-type
+				<button onClick={this.onSignOut} className="ui red google button">
+				<i className="google icon" />
+				Sign Out
+				</button>
+			);
+		}
+		if (!this.state.isSignedIn) {
+			return (
+				// eslint-disable-next-line react/button-has-type
+				<button onClick={this.onSignIn} className="ui green google button">
+				<i className="google icon" />
+				Sign In
+				</button>
+		);
 

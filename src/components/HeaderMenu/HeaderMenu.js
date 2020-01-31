@@ -5,6 +5,7 @@ import { connect } from "react-redux";
 import { NavLink } from "react-router-dom";
 
 import { fetchMenuitems } from "../../actions";
+import GoogleAuth from "../GoogleAuth";
 
 class HeaderMenu extends Component {
   componentDidMount() {
@@ -34,9 +35,7 @@ class HeaderMenu extends Component {
       <div className="row">
         <div className="column HeaderMenu">
           <div className="ui basic buttons">{this.renderList()}</div>
-          <NavLink to="/login" className="ui button">
-            Log In Google
-          </NavLink>
+          <GoogleAuth />
         </div>
       </div>
     );
