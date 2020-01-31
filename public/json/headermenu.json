@@ -1,0 +1,6 @@
+{
+    "headermenu" : [
+        {"id": 1, "name": "One", "link": "/"},
+        {"id": 2, "name": "Two", "link": "/second"}
+    ]
+}
