@@ -525,3 +525,152 @@ project: REACT-auth
 				</button>
 		);
 
+	42. Edit `src/components/GoogleAuth.js`:
+		## меняем имена функции на более логичные
+		onSignIn -> onSignInClick
+		onSignOut -> onSignOutClick
+
+## **************************************************************************************************** ##
+   *** Handling Authentication with React (Part 2 - with REDUX) ***
+## **************************************************************************************************** ##
+
+	43. Для использования REDUX, необходимо его добавть в проект
+		console: npm i --save redux react-redux
+
+	44. Edit `src/actions/index.js`:
+		## добавляем `actions`
+		export const signIn = () => {
+			return {
+				type: "SIGN_IN"
+			};
+		};
+
+		export const signOut = () => {
+			return {
+				type: "SIGN_OUT"
+			};
+		};
+
+	45. Edit `src/components/GoogleAuth.js`:
+		import { connect } from "react-redux";
+		import { signIn, signOut } from "../actions";
+		...
+		## поскольку у нас еще нет функции `mapStateToProps`, первым параметром передаем `null`
+		export default connect(null,{ signIn, signOut})(GoogleAuth);
+
+	46. Edit `src/components/GoogleAuth.js`:
+		## Callback-функция `onAuthChange` возвращает bool-значение: true/false
+		## Передаем в функцию аргумент и в зависимости от значения - будем вызывать различные `reducers`
+		onAuthChange = (isSignedIn) => {
+			if (isSignedIn){
+				this.props.signIn();
+			} else{
+				this.props.signOut();
+			}
+		};
+
+	47. Create `src/actions/AuthReducer.js`:
+		## `src/reducers/AuthReducer`:
+		## `isSignedIn` - look at `src/components GoogkeAuth.js -> state`
+		const INITIAL_STATE = {
+			isSignedIn: null
+		};
+
+		export default (state = INITIAL_STATE, action) => {
+			switch (action.type) {
+				// see to `src/actions/index.js`
+				case "SIGN_IN":
+					return { ...state, isSignedIn: true };
+				case "SIGN_OUT":
+					return { ...state, isSignedIn: false };
+				default:
+					return state;
+			}
+		};
+
+
+	48. Edit `src/actions/index.js`:
+		## добавляем `reducers`
+		import authReducer from "./authReducer";
+		...
+		export default combineReducers({
+			menuitems: menuitemsReducer,
+			auth: authReducer					//add this sting
+		});
+
+	49. Handling Auth Status Through Redux (Обработка статуса аутентификации через Redux):
+		## Edit `src/components/GoogleAuth.js`:
+		## add `mapStateToProps()`
+		const mapStateToProps = (state) => {
+			return { isSignedIn : state.auth.isSignedIn };
+		};
+
+	50. ## Edit `src/components/GoogleAuth.js`:
+		## delete
+		//state = { isSignedIn: null };
+		...
+		## old code:
+		    .then(() => {
+				this.auth = window.gapi.auth2.getAuthInstance();
+				this.setState({ isSignedIn: this.auth.isSignedIn.get() });
+				this.auth.isSignedIn.listen(this.onAuthChange);
+			});
+		## old code:
+		    .then(() => {
+				this.auth = window.gapi.auth2.getAuthInstance();
+				this.onAuthChange(this.auth.isSignedIn.get());
+				this.auth.isSignedIn.listen(this.onAuthChange);
+			});
+
+	51. ## Edit `src/components/GoogleAuth.js`:
+		## renderAuthButton()
+			`this.state.isSignedIn`
+		change on 
+			`this.props.isSignedIn`
+		...
+		export default connect(mapStateToProps, { signIn, signOut })(GoogleAuth);
+
+	52. Fixed Action Types:
+		## для того, чтобы не было случайных ошибок в написании, 
+		## выносим значения TYPE в отдельній файл
+
+	53. Create `src/actions/types.js`:
+		## здесь будут храниться все константы, которые мы используем 
+		## в наших `action creators` & `reducers`:
+		export const SIGN_IN = "SIGN_IN";
+		export const SIGN_OUT = "SIGN_OUT";
+
+	54. Create `src/actions/index.js`:
+		## import
+		import { SIGN_IN, SIGN_OUT } from "./types";
+		...
+		change `"SIGN_IN"` on `SIGN_IN`
+
+	55. Edit `src/actions/AuthReducer.js`:
+		import { SIGN_IN, SIGN_OUT } from "../actions/types";
+		...
+		change `"SIGN_IN"` on `SIGN_IN`
+
+	56. Recording the User's ID
+		## Edit `src/components/GoogleAuth.js`:
+		if (isSignedIn) {
+			this.props.signIn(this.auth.currentUser.get().getId());
+		}
+
+		## Edit `src/actions/index.js`:
+		export const signIn = (userId) => {
+			return {
+				type: SIGN_IN,
+				payload: userId
+			};
+		};
+		
+		## Edit `src/reducers/authReducer.js`:
+		const INITIAL_STATE = {
+			isSignedIn: null,
+			userId: null
+		};
+		case SIGN_IN:
+      		return { ...state, isSignedIn: true, userId: action.payload };
+	  	case SIGN_OUT:
+      		return { ...state, isSignedIn: false, userId: null };
